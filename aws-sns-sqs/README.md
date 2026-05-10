@@ -102,7 +102,27 @@ aws sqs receive-message --region us-east-1 --queue-url "$QUEUE_URL" --wait-time-
 
 ## Limpieza
 
+> ## ⚠️ COMANDO DESTRUCTIVO — LEE ANTES DE EJECUTAR
+>
+> El siguiente comando **borra el stack completo** y todos sus recursos. Específicamente eliminará:
+>
+> | Recurso | Nombre |
+> |---------|--------|
+> | SNS Topic | `topic-dev-jbreategui-001` |
+> | SQS Queue | `queue-dev-jbreategui-001` |
+> | QueuePolicy | (asociada al queue) |
+> | SNS Subscription | (topic → queue) |
+>
+> ✅ **Es seguro**: `delete-stack` solo borra recursos del propio stack, no toca nada más en tu cuenta AWS.
+> ❌ **No se puede deshacer** una vez ejecutado.
+
 ```bash
 aws cloudformation delete-stack --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui
 aws cloudformation wait stack-delete-complete --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui
+```
+
+Verifica que se borró:
+
+```bash
+aws cloudformation describe-stacks --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui 2>&1 | grep -i "does not exist" && echo "Stack borrado ✅"
 ```

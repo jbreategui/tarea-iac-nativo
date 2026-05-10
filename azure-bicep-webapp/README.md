@@ -19,7 +19,7 @@ Despliegue de un stack de **observabilidad** en Azure usando Bicep:
 ```mermaid
 flowchart LR
     App["Aplicación / Cliente<br/>SDK · agent · log shipper"]
-    subgraph RG["Resource Group · rg_Jean_Reategui"]
+    subgraph RG["Resource Group · rg-tarea-iac-jbreategui"]
         direction TB
         AppI["Application Insights<br/>Microsoft.Insights/components<br/>kind: web · IngestionMode: LogAnalytics"]
         LAW["Log Analytics Workspace<br/>Microsoft.OperationalInsights/workspaces<br/>SKU: PerGB2018"]
@@ -44,35 +44,35 @@ flowchart LR
 ### 1. Validar la plantilla
 
 ```bash
-az deployment group validate --resource-group rg_Jean_Reategui --template-file main.bicep --parameters main.bicepparam
+az deployment group validate --resource-group rg-tarea-iac-jbreategui --template-file main.bicep --parameters main.bicepparam
 ```
 
 ### 2. Preview con `what-if`
 
 ```bash
-az deployment group what-if --resource-group rg_Jean_Reategui --template-file main.bicep --parameters main.bicepparam
+az deployment group what-if --resource-group rg-tarea-iac-jbreategui --template-file main.bicep --parameters main.bicepparam
 ```
 
 ### 3. Desplegar
 
 ```bash
-az deployment group create --resource-group rg_Jean_Reategui --name deploy-bicep-monitoring --template-file main.bicep --parameters main.bicepparam
+az deployment group create --resource-group rg-tarea-iac-jbreategui --name deploy-bicep-monitoring --template-file main.bicep --parameters main.bicepparam
 ```
 
 ### 4. Ver outputs
 
 ```bash
-az deployment group show --resource-group rg_Jean_Reategui --name deploy-bicep-monitoring --query properties.outputs
+az deployment group show --resource-group rg-tarea-iac-jbreategui --name deploy-bicep-monitoring --query properties.outputs
 ```
 
 ## Verificación
 
 ```bash
 # Listar el workspace
-az monitor log-analytics workspace show --resource-group rg_Jean_Reategui --workspace-name log-dev-jbreategui-001
+az monitor log-analytics workspace show --resource-group rg-tarea-iac-jbreategui --workspace-name log-dev-jbreategui-001
 
 # Listar el componente App Insights
-az monitor app-insights component show --resource-group rg_Jean_Reategui --app appi-dev-jbreategui-001
+az monitor app-insights component show --resource-group rg-tarea-iac-jbreategui --app appi-dev-jbreategui-001
 ```
 
 En la **portal Azure** verás en el resource group:
@@ -81,9 +81,29 @@ En la **portal Azure** verás en el resource group:
 
 ## Limpieza
 
-> ⚠️ **NUNCA** borres el resource group completo si es el del lab — borraría todo lo que tengas adentro. Borra solo los dos recursos creados por este ejercicio:
+> ## ⚠️ COMANDO DESTRUCTIVO — LEE ANTES DE EJECUTAR
+>
+> Los siguientes comandos **borran solo los 2 recursos** creados por este ejercicio. Específicamente eliminarán:
+>
+> | Recurso | Nombre |
+> |---------|--------|
+> | Application Insights | `appi-dev-jbreategui-001` |
+> | Log Analytics Workspace | `log-dev-jbreategui-001` |
+>
+> ✅ **Borrado quirúrgico**: NO se borra el Resource Group ni otros recursos que tengas adentro.
+> ❌ **No se puede deshacer**.
+>
+> Si tu RG se llama distinto a `rg-tarea-iac-jbreategui`, ajústalo en los dos comandos.
 
 ```bash
-az resource delete --resource-group rg_Jean_Reategui --name appi-dev-jbreategui-001 --resource-type Microsoft.Insights/components
-az resource delete --resource-group rg_Jean_Reategui --name log-dev-jbreategui-001 --resource-type Microsoft.OperationalInsights/workspaces
+az resource delete --resource-group rg-tarea-iac-jbreategui --name appi-dev-jbreategui-001 --resource-type Microsoft.Insights/components
+az resource delete --resource-group rg-tarea-iac-jbreategui --name log-dev-jbreategui-001 --resource-type Microsoft.OperationalInsights/workspaces
 ```
+
+Verifica que se borraron:
+
+```bash
+az resource list --resource-group rg-tarea-iac-jbreategui --query "[?contains(name, 'jbreategui-001')]" --output table
+```
+
+Debe devolver una lista vacía.
