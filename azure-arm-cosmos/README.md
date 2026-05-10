@@ -20,7 +20,7 @@ flowchart LR
         direction TB
         Account["Cosmos DB Account<br/>Microsoft.DocumentDB/databaseAccounts<br/>kind: GlobalDocumentDB<br/>capability: EnableServerless"]
         DB[("SQL Database<br/>databaseAccounts/sqlDatabases<br/>name: appdb")]
-        Account -->|dependsOn<br/>(parent / child)| DB
+        Account -->|dependsOn<br/>parent-child| DB
     end
     Client -->|HTTPS · SQL API<br/>documentEndpoint| Account
 
