@@ -22,6 +22,22 @@ Parameters:
     Default: '001'
     Description: Sufijo unico para evitar colisiones de nombres
 
+  Region:
+    Type: String
+    Default: us-east-1
+    AllowedValues: [us-east-1, us-east-2, us-west-2, sa-east-1]
+    Description: >
+      Region documentada del despliegue. Debe coincidir con el flag --region
+      de la AWS CLI. Se valida en deploy via la condicion RegionMatches.
+
+Rules:
+  ValidateRegion:
+    Assertions:
+      - Assert: !Equals [ !Ref Region, !Ref 'AWS::Region' ]
+        AssertDescription: >
+          El parametro Region debe coincidir con la region del CLI (--region).
+          Ajusta el flag o el parameters.json para que sean iguales.
+
 Resources:
 
   NotificationTopic:
@@ -34,6 +50,8 @@ Resources:
           Value: !Ref EnvironmentName
         - Key: StudentId
           Value: !Ref StudentId
+        - Key: Region
+          Value: !Ref Region
         - Key: ManagedBy
           Value: CloudFormation
 
@@ -48,6 +66,8 @@ Resources:
           Value: !Ref EnvironmentName
         - Key: StudentId
           Value: !Ref StudentId
+        - Key: Region
+          Value: !Ref Region
         - Key: ManagedBy
           Value: CloudFormation
 

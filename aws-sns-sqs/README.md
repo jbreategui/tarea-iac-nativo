@@ -43,24 +43,30 @@ flowchart LR
 
 > Los nodos resaltados (Topic y Queue) son los **2 recursos principales** del entregable.
 
+## Región del despliegue
+
+El despliegue está fijado a **`us-east-1`** vía el parámetro `Region` en `parameters.json`. La plantilla usa una `Rule` de CloudFormation que **falla el despliegue si el flag `--region` de la CLI no coincide** con el parámetro — así la región queda documentada y verificada.
+
+Para cambiar la región: actualiza el valor en `parameters.json` (debe estar en `AllowedValues`) y pasa el mismo valor en `--region` al desplegar.
+
 ## Prerrequisitos
 
 - AWS CLI v2 configurado (`aws configure`)
 - Credenciales con permisos para SNS, SQS y CloudFormation
-- Región por defecto definida (`us-east-1`, por ejemplo)
 
 ## Despliegue
 
 ### 1. Validar la plantilla
 
 ```powershell
-aws cloudformation validate-template --template-body file://template.yaml
+aws cloudformation validate-template --region us-east-1 --template-body file://template.yaml
 ```
 
 ### 2. Crear el stack
 
 ```powershell
 aws cloudformation create-stack `
+  --region us-east-1 `
   --stack-name iac-aws-sns-sqs-jbreategui `
   --template-body file://template.yaml `
   --parameters file://parameters.json `
@@ -70,13 +76,14 @@ aws cloudformation create-stack `
 ### 3. Esperar a que termine
 
 ```powershell
-aws cloudformation wait stack-create-complete --stack-name iac-aws-sns-sqs-jbreategui
+aws cloudformation wait stack-create-complete --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui
 ```
 
 ### 4. Ver outputs
 
 ```powershell
 aws cloudformation describe-stacks `
+  --region us-east-1 `
   --stack-name iac-aws-sns-sqs-jbreategui `
   --query "Stacks[0].Outputs"
 ```
@@ -86,16 +93,16 @@ aws cloudformation describe-stacks `
 Publicar un mensaje en el topic y leerlo desde la cola:
 
 ```powershell
-$topicArn = (aws cloudformation describe-stacks --stack-name iac-aws-sns-sqs-jbreategui --query "Stacks[0].Outputs[?OutputKey=='TopicArn'].OutputValue" --output text)
-$queueUrl = (aws cloudformation describe-stacks --stack-name iac-aws-sns-sqs-jbreategui --query "Stacks[0].Outputs[?OutputKey=='QueueUrl'].OutputValue" --output text)
+$topicArn = (aws cloudformation describe-stacks --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui --query "Stacks[0].Outputs[?OutputKey=='TopicArn'].OutputValue" --output text)
+$queueUrl = (aws cloudformation describe-stacks --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui --query "Stacks[0].Outputs[?OutputKey=='QueueUrl'].OutputValue" --output text)
 
-aws sns publish --topic-arn $topicArn --message "hola desde IaC"
-aws sqs receive-message --queue-url $queueUrl --wait-time-seconds 5
+aws sns publish --region us-east-1 --topic-arn $topicArn --message "hola desde IaC"
+aws sqs receive-message --region us-east-1 --queue-url $queueUrl --wait-time-seconds 5
 ```
 
 ## Limpieza
 
 ```powershell
-aws cloudformation delete-stack --stack-name iac-aws-sns-sqs-jbreategui
-aws cloudformation wait stack-delete-complete --stack-name iac-aws-sns-sqs-jbreategui
+aws cloudformation delete-stack --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui
+aws cloudformation wait stack-delete-complete --region us-east-1 --stack-name iac-aws-sns-sqs-jbreategui
 ```
