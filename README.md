@@ -28,7 +28,7 @@ clase3/
 | # | Carpeta | Plataforma | Herramienta | Recursos elegidos |
 |---|---------|------------|-------------|-------------------|
 | 1 | `aws-sns-sqs/` | AWS | CloudFormation | SNS Topic + SQS Queue (suscripción) |
-| 2 | `azure-bicep-webapp/` | Azure | Bicep | App Service Plan (F1 Free) + Web App |
+| 2 | `azure-bicep-webapp/` | Azure | Bicep | Log Analytics Workspace + Application Insights |
 | 3 | `azure-arm-cosmos/` | Azure | ARM Templates | Cosmos DB Serverless + SQL Database |
 
 ## Criterios de elección de recursos

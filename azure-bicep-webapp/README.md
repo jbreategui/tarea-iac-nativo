@@ -1,36 +1,37 @@
 # Ejercicio Propuesto - Azure Bicep
 
-Despliegue de una **Web App** en Azure usando Bicep, sobre un **App Service Plan** en tier **B1 Basic**.
+Despliegue de un stack de **observabilidad** en Azure usando Bicep:
 
-> Originalmente F1 Free, pero las suscripciones de laboratorio suelen tener cuota 0 para Free VMs (`SubscriptionIsOverQuotaForSku`). B1 es el SKU más barato disponible y permite que el ejercicio se despliegue. Recuerda borrar el resource group al terminar para no acumular costos.
+- **Log Analytics Workspace** — almacena logs y métricas.
+- **Application Insights** — telemetría de aplicaciones, vinculada al workspace (modelo *workspace-based*).
+
+> Nota: originalmente este ejercicio usaba App Service Plan F1/B1, pero la suscripción de laboratorio devolvía `SubscriptionIsOverQuotaForSku` para los tiers Free y Basic. Se pivoteó a recursos PaaS sin cuotas de VM. La dependencia pedagógica (App Insights → Workspace) se mantiene.
 
 ## Recursos creados
 
 | Recurso | Tipo |
 |---------|------|
-| App Service Plan | `Microsoft.Web/serverfarms` (sku B1 Basic) |
-| Web App | `Microsoft.Web/sites` |
-
-> Demuestra el patrón típico Bicep con **dependencia implícita**: la Web App referencia `appServicePlan.id`, por lo que Bicep deduce el orden de despliegue sin necesidad de `dependsOn` explícito.
+| Log Analytics Workspace | `Microsoft.OperationalInsights/workspaces` (sku PerGB2018) |
+| Application Insights | `Microsoft.Insights/components` (kind: web, vinculado al workspace) |
 
 ## Diagrama de arquitectura
 
 ```mermaid
 flowchart LR
-    User["Usuario<br/>(navegador)"]
-    subgraph RG["Resource Group · rg-iac-bicep-jbreategui"]
+    App["Aplicación / Cliente<br/>SDK · agent · log shipper"]
+    subgraph RG["Resource Group · rg_Jean_Reategui"]
         direction TB
-        WebApp["Web App<br/>Microsoft.Web/sites<br/>(httpsOnly, TLS 1.2)"]
-        Plan["App Service Plan<br/>Microsoft.Web/serverfarms<br/>SKU: F1 Free"]
-        WebApp -->|serverFarmId<br/>dependencia implícita| Plan
+        AppI["Application Insights<br/>Microsoft.Insights/components<br/>kind: web · IngestionMode: LogAnalytics"]
+        LAW["Log Analytics Workspace<br/>Microsoft.OperationalInsights/workspaces<br/>SKU: PerGB2018"]
+        AppI -->|WorkspaceResourceId<br/>dependencia implícita| LAW
     end
-    User -->|HTTPS 443| WebApp
+    App -->|telemetría<br/>traces · metrics · logs| AppI
 
     classDef principal fill:#9cf,stroke:#036,stroke-width:2px
-    class WebApp,Plan principal
+    class AppI,LAW principal
 ```
 
-> Bicep deduce el orden de despliegue por la referencia `serverFarmId: appServicePlan.id` — primero el Plan, luego la Web App.
+> Bicep deduce el orden de despliegue por la referencia `WorkspaceResourceId: logAnalyticsWorkspace.id` — primero el Workspace, luego App Insights.
 
 ## Prerrequisitos
 
@@ -38,56 +39,55 @@ flowchart LR
 - Bicep CLI ≥ 0.24 (`az bicep version`)
 - Sesión iniciada (`az login`) y suscripción seleccionada (`az account set --subscription <id>`)
 
-> Nota sobre cuotas: si tu suscripción no permite B1, prueba con `S1` (Standard) o `P1V2`. Si te sale `SubscriptionIsOverQuotaForSku`, ese SKU no está disponible en tu sub.
-
 ## Despliegue
 
-### 1. Crear el Resource Group
+### 1. Validar la plantilla
 
-```powershell
-az group create --name rg-iac-bicep-jbreategui --location eastus
+```bash
+az deployment group validate --resource-group rg_Jean_Reategui --template-file main.bicep --parameters main.bicepparam
 ```
 
-### 2. Lint + build (validación local)
+### 2. Preview con `what-if`
 
-```powershell
-az bicep build --file main.bicep
+```bash
+az deployment group what-if --resource-group rg_Jean_Reategui --template-file main.bicep --parameters main.bicepparam
 ```
 
-### 3. Preview con `what-if`
+### 3. Desplegar
 
-```powershell
-az deployment group what-if `
-  --resource-group rg-iac-bicep-jbreategui `
-  --template-file main.bicep `
-  --parameters main.bicepparam
+```bash
+az deployment group create --resource-group rg_Jean_Reategui --name deploy-bicep-monitoring --template-file main.bicep --parameters main.bicepparam
 ```
 
-### 4. Desplegar
+### 4. Ver outputs
 
-```powershell
-az deployment group create `
-  --resource-group rg-iac-bicep-jbreategui `
-  --name deploy-bicep-webapp `
-  --template-file main.bicep `
-  --parameters main.bicepparam
-```
-
-### 5. Ver outputs
-
-```powershell
-az deployment group show `
-  --resource-group rg-iac-bicep-jbreategui `
-  --name deploy-bicep-webapp `
-  --query properties.outputs
+```bash
+az deployment group show --resource-group rg_Jean_Reategui --name deploy-bicep-monitoring --query properties.outputs
 ```
 
 ## Verificación
 
-Abrir la URL devuelta en `webAppUrl` — debería mostrar la página de bienvenida de App Service.
+```bash
+# Listar el workspace
+az monitor log-analytics workspace show --resource-group rg_Jean_Reategui --workspace-name log-dev-jbreategui-001
+
+# Listar el componente App Insights
+az monitor app-insights component show --resource-group rg_Jean_Reategui --app appi-dev-jbreategui-001
+```
+
+En la **portal Azure** verás en el resource group:
+- 1 Log Analytics workspace
+- 1 Application Insights con propiedad `Workspace` apuntando al workspace anterior
 
 ## Limpieza
 
-```powershell
-az group delete --name rg-iac-bicep-jbreategui --yes --no-wait
+```bash
+az group delete --name rg_Jean_Reategui --yes --no-wait
 ```
+
+> ⚠️ Si tu RG `rg_Jean_Reategui` es el del lab y tiene otros recursos, **no lo borres** — borra solo los dos creados:
+>
+> ```bash
+> az resource delete --resource-group rg_Jean_Reategui --name appi-dev-jbreategui-001 --resource-type Microsoft.Insights/components
+> az resource delete --resource-group rg_Jean_Reategui --name log-dev-jbreategui-001 --resource-type Microsoft.OperationalInsights/workspaces
+> ```

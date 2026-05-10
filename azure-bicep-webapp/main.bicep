@@ -1,5 +1,6 @@
 // Ejercicio Propuesto - Azure Bicep
-// Despliega un App Service Plan (tier F1 Free) y una Web App asociada.
+// Despliega un Log Analytics Workspace y un Application Insights vinculado
+// al workspace (Workspace-based App Insights).
 
 @description('Nombre del entorno')
 @allowed([
@@ -15,11 +16,11 @@ param location string = resourceGroup().location
 @description('Identificador del estudiante')
 param studentId string = 'jbreategui'
 
-@description('Sufijo unico para evitar colisiones de nombres globales')
+@description('Sufijo unico')
 param uniqueSuffix string
 
-var planName = 'plan-${environmentName}-${studentId}-${uniqueSuffix}'
-var webAppName = 'webapp-${environmentName}-${studentId}-${uniqueSuffix}'
+var workspaceName = 'log-${environmentName}-${studentId}-${uniqueSuffix}'
+var appInsightsName = 'appi-${environmentName}-${studentId}-${uniqueSuffix}'
 
 var commonTags = {
   environment: environmentName
@@ -27,35 +28,35 @@ var commonTags = {
   managedBy: 'Bicep'
 }
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: planName
-  location: location
-  sku: {
-    name: 'B1'
-    tier: 'Basic'
-    capacity: 1
-  }
-  properties: {
-    reserved: false
-  }
-  tags: commonTags
-}
-
-resource webApp 'Microsoft.Web/sites@2023-12-01' = {
-  name: webAppName
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+  name: workspaceName
   location: location
   properties: {
-    serverFarmId: appServicePlan.id
-    httpsOnly: true
-    siteConfig: {
-      minTlsVersion: '1.2'
-      ftpsState: 'Disabled'
-      http20Enabled: true
+    sku: {
+      name: 'PerGB2018'
     }
+    retentionInDays: 30
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
   }
   tags: commonTags
 }
 
-output webAppUrl string = 'https://${webApp.properties.defaultHostName}'
-output webAppName string = webApp.name
-output appServicePlanId string = appServicePlan.id
+resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: appInsightsName
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    WorkspaceResourceId: logAnalyticsWorkspace.id
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+    IngestionMode: 'LogAnalytics'
+  }
+  tags: commonTags
+}
+
+output workspaceId string = logAnalyticsWorkspace.id
+output workspaceName string = logAnalyticsWorkspace.name
+output appInsightsId string = appInsights.id
+output appInsightsName string = appInsights.name
