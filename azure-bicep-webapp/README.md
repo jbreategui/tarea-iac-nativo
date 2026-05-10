@@ -81,13 +81,9 @@ En la **portal Azure** verás en el resource group:
 
 ## Limpieza
 
-```bash
-az group delete --name rg_Jean_Reategui --yes --no-wait
-```
+> ⚠️ **NUNCA** borres el resource group completo si es el del lab — borraría todo lo que tengas adentro. Borra solo los dos recursos creados por este ejercicio:
 
-> ⚠️ Si tu RG `rg_Jean_Reategui` es el del lab y tiene otros recursos, **no lo borres** — borra solo los dos creados:
->
-> ```bash
-> az resource delete --resource-group rg_Jean_Reategui --name appi-dev-jbreategui-001 --resource-type Microsoft.Insights/components
-> az resource delete --resource-group rg_Jean_Reategui --name log-dev-jbreategui-001 --resource-type Microsoft.OperationalInsights/workspaces
-> ```
+```bash
+az resource delete --resource-group rg_Jean_Reategui --name appi-dev-jbreategui-001 --resource-type Microsoft.Insights/components
+az resource delete --resource-group rg_Jean_Reategui --name log-dev-jbreategui-001 --resource-type Microsoft.OperationalInsights/workspaces
+```

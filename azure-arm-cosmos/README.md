@@ -16,7 +16,7 @@ Despliegue de **Azure Cosmos DB** en modo **Serverless** con una base de datos S
 ```mermaid
 flowchart LR
     Client["Cliente / App<br/>(SDK · REST · az cosmosdb)"]
-    subgraph RG["Resource Group · rg-iac-arm-jbreategui"]
+    subgraph RG["Resource Group · rg_Jean_Reategui"]
         direction TB
         Account["Cosmos DB Account<br/>Microsoft.DocumentDB/databaseAccounts<br/>kind: GlobalDocumentDB<br/>capability: EnableServerless"]
         DB[("SQL Database<br/>databaseAccounts/sqlDatabases<br/>name: appdb")]
@@ -38,61 +38,46 @@ flowchart LR
 
 ## Despliegue
 
-### 1. Crear el Resource Group
+> Usa el resource group del lab (`rg_Jean_Reategui`). No crees uno nuevo si el lab no te lo permite.
 
-```powershell
-az group create --name rg-iac-arm-jbreategui --location eastus
+### 1. Validar la plantilla
+
+```bash
+az deployment group validate --resource-group rg_Jean_Reategui --template-file azuredeploy.json --parameters azuredeploy.parameters.json
 ```
 
-### 2. Validar la plantilla
+### 2. Preview con `what-if`
 
-```powershell
-az deployment group validate `
-  --resource-group rg-iac-arm-jbreategui `
-  --template-file azuredeploy.json `
-  --parameters azuredeploy.parameters.json
+```bash
+az deployment group what-if --resource-group rg_Jean_Reategui --template-file azuredeploy.json --parameters azuredeploy.parameters.json
 ```
 
-### 3. Preview con `what-if`
+### 3. Desplegar
 
-```powershell
-az deployment group what-if `
-  --resource-group rg-iac-arm-jbreategui `
-  --template-file azuredeploy.json `
-  --parameters azuredeploy.parameters.json
+```bash
+az deployment group create --resource-group rg_Jean_Reategui --name deploy-arm-cosmos --template-file azuredeploy.json --parameters azuredeploy.parameters.json
 ```
 
-### 4. Desplegar
+### 4. Ver outputs
 
-```powershell
-az deployment group create `
-  --resource-group rg-iac-arm-jbreategui `
-  --name deploy-arm-cosmos `
-  --template-file azuredeploy.json `
-  --parameters azuredeploy.parameters.json
-```
-
-### 5. Ver outputs
-
-```powershell
-az deployment group show `
-  --resource-group rg-iac-arm-jbreategui `
-  --name deploy-arm-cosmos `
-  --query properties.outputs
+```bash
+az deployment group show --resource-group rg_Jean_Reategui --name deploy-arm-cosmos --query properties.outputs
 ```
 
 ## Verificación
 
-```powershell
+```bash
 # Listar la cuenta
-az cosmosdb show --resource-group rg-iac-arm-jbreategui --name <cosmosAccountName>
+az cosmosdb show --resource-group rg_Jean_Reategui --name <cosmosAccountName>
 
 # Listar las bases de datos
-az cosmosdb sql database list --resource-group rg-iac-arm-jbreategui --account-name <cosmosAccountName>
+az cosmosdb sql database list --resource-group rg_Jean_Reategui --account-name <cosmosAccountName>
 ```
 
 ## Limpieza
 
-```powershell
-az group delete --name rg-iac-arm-jbreategui --yes --no-wait
+> ⚠️ **NUNCA** borres el resource group si es el del lab — borra solo los recursos creados por este ejercicio. Cosmos DB es child→parent, así que borrar la cuenta borra también las bases de datos.
+
+```bash
+az cosmosdb delete --resource-group rg_Jean_Reategui --name <cosmosAccountName> --yes
 ```
