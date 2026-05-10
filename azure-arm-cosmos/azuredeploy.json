@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "metadata": {
-    "description": "Ejercicio Propuesto - Azure ARM. Despliega una cuenta Cosmos DB en modo Serverless y una base de datos SQL dentro de la cuenta."
+    "description": "Ejercicio Propuesto - Azure ARM. Despliega un Storage Account y un Blob Container anidado, demostrando el patron parent-child de ARM."
   },
   "parameters": {
     "environmentName": {
@@ -25,14 +25,14 @@
       "type": "string",
       "metadata": { "description": "Sufijo unico para evitar colisiones de nombres globales" }
     },
-    "databaseName": {
+    "containerName": {
       "type": "string",
-      "defaultValue": "appdb",
-      "metadata": { "description": "Nombre logico de la base de datos SQL" }
+      "defaultValue": "appdata",
+      "metadata": { "description": "Nombre del Blob Container child" }
     }
   },
   "variables": {
-    "cosmosAccountName": "[toLower(format('cosmos-{0}-{1}-{2}', parameters('environmentName'), parameters('studentId'), parameters('uniqueSuffix')))]",
+    "storageAccountName": "[toLower(concat('st', parameters('environmentName'), parameters('studentId'), parameters('uniqueSuffix')))]",
     "commonTags": {
       "environment": "[parameters('environmentName')]",
       "studentId": "[parameters('studentId')]",
@@ -41,58 +41,54 @@
   },
   "resources": [
     {
-      "type": "Microsoft.DocumentDB/databaseAccounts",
-      "apiVersion": "2024-05-15",
-      "name": "[variables('cosmosAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('storageAccountName')]",
       "location": "[parameters('location')]",
-      "kind": "GlobalDocumentDB",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
       "tags": "[variables('commonTags')]",
       "properties": {
-        "databaseAccountOfferType": "Standard",
-        "consistencyPolicy": {
-          "defaultConsistencyLevel": "Session"
-        },
-        "locations": [
-          {
-            "locationName": "[parameters('location')]",
-            "failoverPriority": 0,
-            "isZoneRedundant": false
-          }
-        ],
-        "capabilities": [
-          { "name": "EnableServerless" }
-        ],
+        "accessTier": "Hot",
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false,
+        "supportsHttpsTrafficOnly": true,
         "publicNetworkAccess": "Enabled",
-        "enableAutomaticFailover": false,
-        "enableMultipleWriteLocations": false
+        "encryption": {
+          "services": {
+            "blob": { "enabled": true },
+            "file": { "enabled": true }
+          },
+          "keySource": "Microsoft.Storage"
+        }
       }
     },
     {
-      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-      "apiVersion": "2024-05-15",
-      "name": "[format('{0}/{1}', variables('cosmosAccountName'), parameters('databaseName'))]",
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/default/{1}', variables('storageAccountName'), parameters('containerName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
-        "resource": {
-          "id": "[parameters('databaseName')]"
-        }
+        "publicAccess": "None"
       }
     }
   ],
   "outputs": {
-    "cosmosAccountName": {
+    "storageAccountName": {
       "type": "string",
-      "value": "[variables('cosmosAccountName')]"
+      "value": "[variables('storageAccountName')]"
     },
-    "cosmosEndpoint": {
+    "storageBlobEndpoint": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))).documentEndpoint]"
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))).primaryEndpoints.blob]"
     },
-    "databaseName": {
+    "containerName": {
       "type": "string",
-      "value": "[parameters('databaseName')]"
+      "value": "[parameters('containerName')]"
     }
   }
 }

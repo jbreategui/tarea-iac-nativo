@@ -29,7 +29,7 @@ clase3/
 |---|---------|------------|-------------|-------------------|
 | 1 | `aws-sns-sqs/` | AWS | CloudFormation | SNS Topic + SQS Queue (suscripción) |
 | 2 | `azure-bicep-webapp/` | Azure | Bicep | Log Analytics Workspace + Application Insights |
-| 3 | `azure-arm-cosmos/` | Azure | ARM Templates | Cosmos DB Serverless + SQL Database |
+| 3 | `azure-arm-cosmos/` | Azure | ARM Templates | Storage Account + Blob Container |
 
 ## Criterios de elección de recursos
 

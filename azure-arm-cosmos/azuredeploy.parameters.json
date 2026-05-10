@@ -5,6 +5,6 @@
     "environmentName": { "value": "dev" },
     "studentId":       { "value": "jbreategui" },
     "uniqueSuffix":    { "value": "001" },
-    "databaseName":    { "value": "appdb" }
+    "containerName":   { "value": "appdata" }
   }
 }
