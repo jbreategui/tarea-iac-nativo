@@ -18,6 +18,31 @@ Se incluye una `AWS::SQS::QueuePolicy` que autoriza a SNS a entregar mensajes a 
 
 > Los **2 recursos principales** del entregable son **SNS Topic** y **SQS Queue**. La policy y la subscription son recursos de soporte para que la integración funcione.
 
+## Diagrama de arquitectura
+
+```mermaid
+flowchart LR
+    Pub["Publisher<br/>(aws sns publish)"]
+    subgraph AWS["AWS Account · CloudFormation Stack"]
+        direction LR
+        Topic(["SNS Topic<br/>NotificationTopic"])
+        Sub{{"SNS Subscription<br/>protocol: sqs"}}
+        Queue[("SQS Queue<br/>MessageQueue")]
+        Policy["QueuePolicy<br/>(allow sns:SendMessage)"]
+        Topic -->|fan-out| Sub
+        Sub -->|deliver| Queue
+        Policy -. authorizes .-> Queue
+    end
+    Cons["Consumer<br/>(aws sqs receive-message)"]
+    Pub -->|publish| Topic
+    Queue -->|poll| Cons
+
+    classDef principal fill:#ff9,stroke:#333,stroke-width:2px
+    class Topic,Queue principal
+```
+
+> Los nodos resaltados (Topic y Queue) son los **2 recursos principales** del entregable.
+
 ## Prerrequisitos
 
 - AWS CLI v2 configurado (`aws configure`)

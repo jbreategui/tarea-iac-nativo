@@ -11,6 +11,25 @@ Despliegue de una **Web App** en Azure usando Bicep, sobre un **App Service Plan
 
 > Demuestra el patrón típico Bicep con **dependencia implícita**: la Web App referencia `appServicePlan.id`, por lo que Bicep deduce el orden de despliegue sin necesidad de `dependsOn` explícito.
 
+## Diagrama de arquitectura
+
+```mermaid
+flowchart LR
+    User["Usuario<br/>(navegador)"]
+    subgraph RG["Resource Group · rg-iac-bicep-jbreategui"]
+        direction TB
+        WebApp["Web App<br/>Microsoft.Web/sites<br/>(httpsOnly, TLS 1.2)"]
+        Plan["App Service Plan<br/>Microsoft.Web/serverfarms<br/>SKU: F1 Free"]
+        WebApp -->|serverFarmId<br/>dependencia implícita| Plan
+    end
+    User -->|HTTPS 443| WebApp
+
+    classDef principal fill:#9cf,stroke:#036,stroke-width:2px
+    class WebApp,Plan principal
+```
+
+> Bicep deduce el orden de despliegue por la referencia `serverFarmId: appServicePlan.id` — primero el Plan, luego la Web App.
+
 ## Prerrequisitos
 
 - Azure CLI ≥ 2.50 (`az --version`)

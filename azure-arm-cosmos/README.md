@@ -11,6 +11,25 @@ Despliegue de **Azure Cosmos DB** en modo **Serverless** con una base de datos S
 
 > Modo Serverless: pagas por **request unit consumida**, sin throughput aprovisionado. Ideal para cargas intermitentes y para no incurrir en costos fijos durante la entrega.
 
+## Diagrama de arquitectura
+
+```mermaid
+flowchart LR
+    Client["Cliente / App<br/>(SDK · REST · az cosmosdb)"]
+    subgraph RG["Resource Group · rg-iac-arm-jbreategui"]
+        direction TB
+        Account["Cosmos DB Account<br/>Microsoft.DocumentDB/databaseAccounts<br/>kind: GlobalDocumentDB<br/>capability: EnableServerless"]
+        DB[("SQL Database<br/>databaseAccounts/sqlDatabases<br/>name: appdb")]
+        Account -->|dependsOn<br/>(parent / child)| DB
+    end
+    Client -->|HTTPS · SQL API<br/>documentEndpoint| Account
+
+    classDef principal fill:#cfc,stroke:#363,stroke-width:2px
+    class Account,DB principal
+```
+
+> El recurso `sqlDatabases` es **child** del `databaseAccounts` — su nombre se construye como `{cuenta}/{database}` y depende explícitamente de la cuenta vía `dependsOn`.
+
 ## Prerrequisitos
 
 - Azure CLI ≥ 2.50
