@@ -3,7 +3,6 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "environmentName": { "value": "dev" },
-    "location":        { "value": "eastus2" },
     "studentId":       { "value": "jbreategui" },
     "uniqueSuffix":    { "value": "001" },
     "databaseName":    { "value": "appdb" }
