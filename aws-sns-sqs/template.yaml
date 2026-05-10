@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Ejercicio Propuesto - AWS CloudFormation.
+  Despliega un SNS Topic y una SQS Queue con suscripcion del topic al queue
+  (patron pub/sub). Incluye QueuePolicy para permitir que SNS publique mensajes
+  en la cola.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, qa, prod]
+    Description: Nombre del entorno
+
+  StudentId:
+    Type: String
+    Default: jbreategui
+    Description: Identificador del estudiante (se usa en el nombre de los recursos)
+
+  UniqueSuffix:
+    Type: String
+    Default: '001'
+    Description: Sufijo unico para evitar colisiones de nombres
+
+Resources:
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'topic-${EnvironmentName}-${StudentId}-${UniqueSuffix}'
+      DisplayName: !Sub 'Notification topic ${EnvironmentName}'
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: StudentId
+          Value: !Ref StudentId
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  MessageQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'queue-${EnvironmentName}-${StudentId}-${UniqueSuffix}'
+      VisibilityTimeout: 30
+      MessageRetentionPeriod: 345600
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: StudentId
+          Value: !Ref StudentId
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref MessageQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSNSPublishToQueue
+            Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt MessageQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref NotificationTopic
+
+  TopicSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref NotificationTopic
+      Protocol: sqs
+      Endpoint: !GetAtt MessageQueue.Arn
+      RawMessageDelivery: true
+
+Outputs:
+  TopicArn:
+    Description: ARN del topic SNS
+    Value: !Ref NotificationTopic
+
+  QueueUrl:
+    Description: URL del queue SQS
+    Value: !Ref MessageQueue
+
+  QueueArn:
+    Description: ARN del queue SQS
+    Value: !GetAtt MessageQueue.Arn

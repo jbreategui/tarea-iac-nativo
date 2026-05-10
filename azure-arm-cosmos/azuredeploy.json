@@ -1,0 +1,98 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Ejercicio Propuesto - Azure ARM. Despliega una cuenta Cosmos DB en modo Serverless y una base de datos SQL dentro de la cuenta."
+  },
+  "parameters": {
+    "environmentName": {
+      "type": "string",
+      "defaultValue": "dev",
+      "allowedValues": [ "dev", "qa", "prod" ],
+      "metadata": { "description": "Nombre del entorno" }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": { "description": "Region de los recursos" }
+    },
+    "studentId": {
+      "type": "string",
+      "defaultValue": "jbreategui",
+      "metadata": { "description": "Identificador del estudiante" }
+    },
+    "uniqueSuffix": {
+      "type": "string",
+      "metadata": { "description": "Sufijo unico para evitar colisiones de nombres globales" }
+    },
+    "databaseName": {
+      "type": "string",
+      "defaultValue": "appdb",
+      "metadata": { "description": "Nombre logico de la base de datos SQL" }
+    }
+  },
+  "variables": {
+    "cosmosAccountName": "[toLower(format('cosmos-{0}-{1}-{2}', parameters('environmentName'), parameters('studentId'), parameters('uniqueSuffix')))]",
+    "commonTags": {
+      "environment": "[parameters('environmentName')]",
+      "studentId": "[parameters('studentId')]",
+      "managedBy": "ARM"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "apiVersion": "2024-05-15",
+      "name": "[variables('cosmosAccountName')]",
+      "location": "[parameters('location')]",
+      "kind": "GlobalDocumentDB",
+      "tags": "[variables('commonTags')]",
+      "properties": {
+        "databaseAccountOfferType": "Standard",
+        "consistencyPolicy": {
+          "defaultConsistencyLevel": "Session"
+        },
+        "locations": [
+          {
+            "locationName": "[parameters('location')]",
+            "failoverPriority": 0,
+            "isZoneRedundant": false
+          }
+        ],
+        "capabilities": [
+          { "name": "EnableServerless" }
+        ],
+        "publicNetworkAccess": "Enabled",
+        "enableAutomaticFailover": false,
+        "enableMultipleWriteLocations": false
+      }
+    },
+    {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+      "apiVersion": "2024-05-15",
+      "name": "[format('{0}/{1}', variables('cosmosAccountName'), parameters('databaseName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "[parameters('databaseName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "cosmosAccountName": {
+      "type": "string",
+      "value": "[variables('cosmosAccountName')]"
+    },
+    "cosmosEndpoint": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))).documentEndpoint]"
+    },
+    "databaseName": {
+      "type": "string",
+      "value": "[parameters('databaseName')]"
+    }
+  }
+}

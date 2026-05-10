@@ -1,0 +1,19 @@
+# Claude Code local settings
+.claude/
+
+# Bicep build output
+*.bicep.json
+
+# AWS / Azure CLI temp
+*.cf.tmp
+.azure/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp

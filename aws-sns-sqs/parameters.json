@@ -1,0 +1,5 @@
+[
+  { "ParameterKey": "EnvironmentName", "ParameterValue": "dev" },
+  { "ParameterKey": "StudentId",       "ParameterValue": "jbreategui" },
+  { "ParameterKey": "UniqueSuffix",    "ParameterValue": "001" }
+]
