@@ -1,12 +1,14 @@
 # Ejercicio Propuesto - Azure Bicep
 
-Despliegue de una **Web App** en Azure usando Bicep, sobre un **App Service Plan** en tier gratuito (F1).
+Despliegue de una **Web App** en Azure usando Bicep, sobre un **App Service Plan** en tier **B1 Basic**.
+
+> Originalmente F1 Free, pero las suscripciones de laboratorio suelen tener cuota 0 para Free VMs (`SubscriptionIsOverQuotaForSku`). B1 es el SKU más barato disponible y permite que el ejercicio se despliegue. Recuerda borrar el resource group al terminar para no acumular costos.
 
 ## Recursos creados
 
 | Recurso | Tipo |
 |---------|------|
-| App Service Plan | `Microsoft.Web/serverfarms` (sku F1 Free) |
+| App Service Plan | `Microsoft.Web/serverfarms` (sku B1 Basic) |
 | Web App | `Microsoft.Web/sites` |
 
 > Demuestra el patrón típico Bicep con **dependencia implícita**: la Web App referencia `appServicePlan.id`, por lo que Bicep deduce el orden de despliegue sin necesidad de `dependsOn` explícito.
@@ -36,7 +38,7 @@ flowchart LR
 - Bicep CLI ≥ 0.24 (`az bicep version`)
 - Sesión iniciada (`az login`) y suscripción seleccionada (`az account set --subscription <id>`)
 
-> Nota: el tier **F1 Free** está limitado a **1 App Service Plan gratuito por suscripción y región**. Si ya tienes uno, cambia `sku.name` a `B1` (≈ $13/mes) o usa otro Resource Group en otra región.
+> Nota sobre cuotas: si tu suscripción no permite B1, prueba con `S1` (Standard) o `P1V2`. Si te sale `SubscriptionIsOverQuotaForSku`, ese SKU no está disponible en tu sub.
 
 ## Despliegue
 
